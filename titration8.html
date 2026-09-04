@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HCl–NaOH Titration</title>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #eef3f8;
+    color: #1d2b34;
+  }
+
+  .app {
+    max-width: 1300px;
+    margin: auto;
+    padding: 18px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 5px 22px #0002;
+  }
+
+  h1 {
+    margin: 0 0 16px;
+    text-align: center;
+    font-size: 25px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .panel {
+    padding: 12px;
+    border: 1px solid #ccd8e0;
+    border-radius: 10px;
+    background: #fbfdff;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 7px;
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+  }
+
+  #toggleBtn {
+    min-width: 230px;
+    background: #198754;
+  }
+
+  #toggleBtn.open {
+    background: #c73636;
+  }
+
+  #resetBtn {
+    background: #526875;
+  }
+
+  button:hover {
+    filter: brightness(1.1);
+  }
+
+  .readout {
+    font-weight: bold;
+    line-height: 1.7;
+  }
+
+  .status {
+    min-height: 22px;
+    margin-top: 10px;
+    color: #4b5c66;
+  }
+
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 7px;
+    font-size: 13px;
+  }
+
+  .key {
+    display: inline-block;
+    width: 22px;
+    height: 4px;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  /*
+    Animated drops. Their visibility is controlled by the JavaScript
+    stopcock state.
+  */
+  #drop1,
+  #drop2 {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: drip 0.75s linear infinite;
+  }
+
+  #drop2 {
+    animation-delay: 0.37s;
+  }
+
+  @keyframes drip {
+    0% {
+      opacity: 0;
+      transform: translateY(0);
+    }
+
+    20% {
+      opacity: 1;
+    }
+
+    85% {
+      opacity: 1;
+      transform: translateY(27px);
+    }
+
+    100% {
+      opacity: 0;
+      transform: translateY(34px);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <h1>Titration of 25.0 mL 0.100 M HCl with 0.100 M NaOH</h1>
+
+  <div class="layout">
+
+    <!-- Titration apparatus -->
+    <section class="panel">
+      <svg id="apparatus"
+           viewBox="0 0 600 620"
+           aria-label="Buret dripping sodium hydroxide into a conical flask">
+
+        <defs>
+          <linearGradient id="glass" x1="0" x2="1">
+            <stop offset="0" stop-color="#ffffff" stop-opacity=".75"/>
+            <stop offset=".5" stop-color="#d9efff" stop-opacity=".25"/>
+            <stop offset="1" stop-color="#ffffff" stop-opacity=".8"/>
+          </linearGradient>
+
+          <clipPath id="flaskClip">
+            <path d="
+              M260 395
+              L260 450
+              C260 470 226 495 198 526
+              C184 542 190 565 214 572
+              L386 572
+              C410 565 416 542 402 526
+              C374 495 340 470 340 450
+              L340 395 Z"/>
+          </clipPath>
+        </defs>
+
+        <!-- Retort stand -->
+        <line x1="82" y1="70" x2="82" y2="575"
+              stroke="#354852" stroke-width="8"/>
+
+        <line x1="42" y1="575" x2="500" y2="575"
+              stroke="#354852" stroke-width="10"/>
+
+        <!-- Clamp holding centered buret -->
+        <line x1="82" y1="105" x2="245" y2="105"
+              stroke="#354852" stroke-width="6"/>
+
+        <line x1="245" y1="105" x2="245" y2="125"
+              stroke="#354852" stroke-width="5"/>
+
+        <!-- Buret centered over the flask -->
+        <rect x="245" y="125" width="70" height="220"
+              fill="url(#glass)"
+              stroke="#45606d"
+              stroke-width="3"/>
+
+        <!-- Buret liquid -->
+        <rect id="buretLiquid"
+              x="249"
+              y="129"
+              width="62"
+              height="212"
+              fill="#cfeaff"
+              opacity=".85"/>
+
+        <!-- Buret graduations -->
+        <g stroke="#526875"
+          stroke-width="2"
+          fill="#354852"
+          font-size="13">
+
+          <line x1="245" y1="140" x2="263" y2="140"/>
+          <text x="214" y="145">0</text>
+
+          <line x1="245" y1="180" x2="263" y2="180"/>
+          <text x="207" y="185">10</text>
+
+          <line x1="245" y1="220" x2="263" y2="220"/>
+          <text x="207" y="225">20</text>
+
+          <line x1="245" y1="260" x2="263" y2="260"/>
+          <text x="207" y="265">30</text>
+
+          <line x1="245" y1="300" x2="263" y2="300"/>
+          <text x="207" y="305">40</text>
+
+          <line x1="245" y1="340" x2="263" y2="340"/>
+          <text x="207" y="345">50</text>
+        </g>
+
+        <text x="250" y="113" font-size="15" fill="#263943">
+          0.100 M NaOH
+        </text>
+
+        <!-- Stopcock above the top of the flask -->
+        <line x1="280" y1="345" x2="280" y2="365"
+              stroke="#354852"
+              stroke-width="5"/>
+
+        <rect x="260" y="360" width="40" height="17"
+              rx="4"
+              fill="#5a6d76"
+              stroke="#263943"
+              stroke-width="2"/>
+
+        <!-- Horizontal = closed; diagonal = open -->
+        <line id="stopcockHandle"
+              x1="253"
+              y1="368"
+              x2="307"
+              y2="368"
+              stroke="#c5303c"
+              stroke-width="7"
+              stroke-linecap="round"/>
+
+        <!-- Delivery tip extends into the flask -->
+        <line x1="280" y1="377" x2="280" y2="414"
+              stroke="#45606d"
+              stroke-width="4"/>
+
+        <!-- Falling titrant drops -->
+        <g id="drops" opacity="0">
+          <circle id="drop1"
+                  cx="280"
+                  cy="420"
+                  r="4"
+                  fill="#55a8e8"/>
+
+          <circle id="drop2"
+                  cx="280"
+                  cy="440"
+                  r="3"
+                  fill="#55a8e8"/>
+        </g>
+
+        <!-- Conical flask -->
+        <path d="
+          M260 395
+          L260 450
+          C260 470 226 495 198 526
+          C184 542 190 565 214 572
+          L386 572
+          C410 565 416 542 402 526
+          C374 495 340 470 340 450
+          L340 395 Z"
+          fill="url(#glass)"
+          stroke="#45606d"
+          stroke-width="3"/>
+
+        <!-- Solution inside flask -->
+        <path id="flaskLiquid"
+              d="M190 530
+                 C240 518 360 518 410 530
+                 L410 580
+                 L190 580 Z"
+              fill="#edf6ff"
+              clip-path="url(#flaskClip)"/>
+
+        <!-- Mixing indication -->
+        <path id="swirl"
+              d="M225 542 Q280 574 335 542"
+              fill="none"
+              stroke="#d080b1"
+              stroke-width="3"
+              opacity=".5"/>
+
+        <text x="215" y="604" font-size="15" fill="#263943">
+          25.0 mL HCl + phenolphthalein
+        </text>
+      </svg>
+
+      <div class="controls">
+        <button id="toggleBtn">Open Stopcock / Start</button>
+        <button id="resetBtn">Reset</button>
+
+        <div class="readout">
+          Volume: <span id="volumeReadout">0.00</span> mL<br>
+          pH: <span id="phReadout">1.00</span><br>
+          α(H): <span id="alphaHReadout">1.00</span><br>
+          α(OH): <span id="alphaOHReadout">1.00e-13</span>
+        </div>
+      </div>
+
+      <div id="status" class="status">
+        Click the button to open the stopcock and begin the titration.
+      </div>
+
+      <div class="legend">
+        <span>
+          <i class="key" style="background:#2876bd"></i>pH
+        </span>
+
+        <span>
+          <i class="key" style="background:#d9368a"></i>α(H)
+        </span>
+
+        <span>
+          <i class="key" style="background:#ed8b22"></i>α(OH)
+        </span>
+      </div>
+    </section>
+
+    <!-- Graph -->
+    <section class="panel">
+      <svg id="graph"
+           viewBox="0 0 760 620"
+           aria-label="pH and alpha titration graph">
+
+        <rect width="760" height="620" fill="#fbfdff"/>
+
+        <!-- Plot axes -->
+        <line x1="80" y1="45" x2="80" y2="535"
+              stroke="#263943"
+              stroke-width="3"/>
+
+        <line x1="80" y1="535" x2="670" y2="535"
+              stroke="#263943"
+              stroke-width="3"/>
+
+        <line x1="670" y1="45" x2="670" y2="535"
+              stroke="#263943"
+              stroke-width="3"/>
+
+        <!-- Grid, labels, and tick marks -->
+        <g id="grid"></g>
+
+        <text x="375" y="592"
+              text-anchor="middle"
+              font-size="17">
+          Volume of NaOH added (mL)
+        </text>
+
+        <text x="22" y="290"
+              text-anchor="middle"
+              font-size="17"
+              transform="rotate(-90 22 290)">
+          pH
+        </text>
+
+        <text x="735" y="290"
+              text-anchor="middle"
+              font-size="16"
+              transform="rotate(90 735 290)">
+          α(H), α(OH)
+        </text>
+
+        <text x="375" y="26"
+              text-anchor="middle"
+              font-size="19"
+              font-weight="bold">
+          Titration Curve
+        </text>
+
+        <!-- Equivalence-point marker -->
+        <line x1="375" y1="45" x2="375" y2="535"
+              stroke="#b62e78"
+              stroke-dasharray="7 7"
+              opacity=".55"/>
+
+        <text x="382" y="64"
+              font-size="13"
+              fill="#a92870">
+          equivalence ≈ 25.0 mL
+        </text>
+
+        <!-- Data curves -->
+        <polyline id="phCurve"
+                  fill="none"
+                  stroke="#2876bd"
+                  stroke-width="4"/>
+
+        <polyline id="alphaHCurve"
+                  fill="none"
+                  stroke="#d9368a"
+                  stroke-width="3"/>
+
+        <polyline id="alphaOHCurve"
+                  fill="none"
+                  stroke="#ed8b22"
+                  stroke-width="3"/>
+
+        <!-- Current graph points -->
+        <circle id="phPoint"
+                r="6"
+                fill="#2876bd"
+                stroke="#17212b"
+                stroke-width="2"/>
+
+        <circle id="alphaHPoint"
+                r="5"
+                fill="#d9368a"/>
+
+        <circle id="alphaOHPoint"
+                r="5"
+                fill="#ed8b22"/>
+      </svg>
+    </section>
+
+  </div>
+</div>
+
+<script>
+  const V_HCL = 25.0;       // Initial HCl volume, mL
+  const C_HCL = 0.100;      // HCl concentration, mol/L
+  const C_NAOH = 0.100;     // NaOH concentration, mol/L
+  const MAX_VOLUME = 50.0;  // Maximum displayed NaOH volume, mL
+
+  let volume = 0;
+  let running = false;
+  let timer = null;
+
+  const toggleBtn = document.getElementById("toggleBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const volumeReadout = document.getElementById("volumeReadout");
+  const phReadout = document.getElementById("phReadout");
+  const alphaHReadout = document.getElementById("alphaHReadout");
+  const alphaOHReadout = document.getElementById("alphaOHReadout");
+  const status = document.getElementById("status");
+
+  const buretLiquid = document.getElementById("buretLiquid");
+  const flaskLiquid = document.getElementById("flaskLiquid");
+  const stopcockHandle = document.getElementById("stopcockHandle");
+  const drops = document.getElementById("drops");
+  const swirl = document.getElementById("swirl");
+
+  const grid = document.getElementById("grid");
+  const phCurve = document.getElementById("phCurve");
+  const alphaHCurve = document.getElementById("alphaHCurve");
+  const alphaOHCurve = document.getElementById("alphaOHCurve");
+
+  const phPoint = document.getElementById("phPoint");
+  const alphaHPoint = document.getElementById("alphaHPoint");
+  const alphaOHPoint = document.getElementById("alphaOHPoint");
+
+  /*
+    Calculate:
+      pH
+      alpha(H)  = [H+]  / [Cl-]
+      alpha(OH) = [OH-] / [Cl-]
+
+    Both alpha values are restricted to the interval 0 to 1.
+  */
+  function chemistry(vNaOH) {
+    const acidMoles = C_HCL * V_HCL / 1000;
+    const baseMoles = C_NAOH * vNaOH / 1000;
+    const totalVolume = (V_HCL + vNaOH) / 1000;
+
+    // Chloride concentration remains determined by the original HCl.
+    const chloride = acidMoles / totalVolume;
+
+    let h;
+    let oh;
+
+    if (Math.abs(acidMoles - baseMoles) < 1e-14) {
+      // Equivalence point: neutral solution
+      h = 1e-7;
+      oh = 1e-7;
+    } else if (acidMoles > baseMoles) {
+      // HCl is in excess
+      h = (acidMoles - baseMoles) / totalVolume;
+      oh = 1e-14 / h;
+    } else {
+      // NaOH is in excess
+      oh = (baseMoles - acidMoles) / totalVolume;
+      h = 1e-14 / oh;
+    }
+
+    const pH = -Math.log10(h);
+
+    const alphaH = Math.max(
+      0,
+      Math.min(1, h / chloride)
+    );
+
+    const alphaOH = Math.max(
+      0,
+      Math.min(1, oh / chloride)
+    );
+
+    return {
+      pH,
+      alphaH,
+      alphaOH
+    };
+  }
+
+  // Horizontal graph coordinate: 0–50 mL.
+  function xCoord(v) {
+    return 80 + (v / MAX_VOLUME) * 590;
+  }
+
+  // Left axis: pH from 0 to 14.
+  function pHY(ph) {
+    return 535 - (ph / 14) * 490;
+  }
+
+  // Right axis: alpha from 0 to 1, linearly.
+  function alphaY(alpha) {
+    const clampedAlpha = Math.max(0, Math.min(1, alpha));
+    return 535 - clampedAlpha * 490;
+  }
+
+  function buildGrid() {
+    let output = "";
+
+    // pH grid and left-axis labels.
+    for (let pH = 0; pH <= 14; pH += 2) {
+      const y = pHY(pH);
+
+      output += `
+        <line x1="80" y1="${y}" x2="670" y2="${y}"
+              stroke="#d7e1e8"
+              stroke-width="1"/>
+
+        <line x1="74" y1="${y}" x2="80" y2="${y}"
+              stroke="#263943"
+              stroke-width="2"/>
+
+        <text x="68" y="${y + 5}"
+              text-anchor="end"
+              font-size="13">
+          ${pH}
+        </text>
+      `;
+    }
+
+    // Linear alpha grid and right-axis labels.
+    for (let alpha = 0; alpha <= 1.0001; alpha += 0.2) {
+      const value = Number(alpha.toFixed(1));
+      const y = alphaY(value);
+
+      output += `
+        <line x1="670" y1="${y}" x2="676" y2="${y}"
+              stroke="#263943"
+              stroke-width="2"/>
+
+        <text x="682" y="${y + 5}"
+              text-anchor="start"
+              font-size="13">
+          ${value.toFixed(1)}
+        </text>
+      `;
+    }
+
+    // Volume grid and x-axis labels.
+    for (let v = 0; v <= MAX_VOLUME; v += 5) {
+      const x = xCoord(v);
+
+      output += `
+        <line x1="${x}" y1="45" x2="${x}" y2="535"
+              stroke="#e5ecf1"
+              stroke-width="1"/>
+
+        <line x1="${x}" y1="535" x2="${x}" y2="541"
+              stroke="#263943"
+              stroke-width="2"/>
+
+        <text x="${x}" y="557"
+              text-anchor="middle"
+              font-size="13">
+          ${v}
+        </text>
+      `;
+    }
+
+    grid.innerHTML = output;
+  }
+
+  function updateDisplay() {
+    const current = chemistry(volume);
+
+    volumeReadout.textContent = volume.toFixed(2);
+    phReadout.textContent = current.pH.toFixed(2);
+    alphaHReadout.textContent = current.alphaH.toExponential(2);
+    alphaOHReadout.textContent = current.alphaOH.toExponential(2);
+
+    /*
+      Buret liquid geometry:
+      Initial liquid extends from y = 129 to y = 341.
+      At 50.00 mL delivered, the liquid reaches zero height.
+    */
+    const buretHeight = 212;
+    const fractionDelivered = volume / MAX_VOLUME;
+    const remainingHeight = buretHeight * (1 - fractionDelivered);
+
+    buretLiquid.setAttribute(
+      "y",
+      129 + buretHeight - remainingHeight
+    );
+
+    buretLiquid.setAttribute(
+      "height",
+      remainingHeight
+    );
+
+    // Raise the liquid surface slightly as titrant enters the flask.
+    const flaskLevel = 530 - Math.min(volume * 0.16, 8);
+
+    flaskLiquid.setAttribute(
+      "d",
+      `M190 ${flaskLevel}
+       C240 ${flaskLevel - 12}
+       360 ${flaskLevel - 12}
+       410 ${flaskLevel}
+       L410 580
+       L190 580 Z`
+    );
+
+    // Phenolphthalein color.
+    let solutionColor = "#edf6ff";
+
+    if (current.pH >= 8.2 && current.pH < 10.0) {
+      const transition = (current.pH - 8.2) / 1.8;
+
+      const green = Math.round(246 - transition * 125);
+      const blue = Math.round(252 - transition * 65);
+
+      solutionColor = `rgb(255, ${green}, ${blue})`;
+    } else if (current.pH >= 10.0) {
+      solutionColor = "#ef70b5";
+    }
+
+    flaskLiquid.setAttribute("fill", solutionColor);
+
+    // Build curves from zero to the current volume.
+    const phPoints = [];
+    const alphaHPoints = [];
+    const alphaOHPoints = [];
+
+    for (let v = 0; v <= volume; v += 0.05) {
+      const values = chemistry(v);
+      const x = xCoord(v);
+
+      phPoints.push(`${x},${pHY(values.pH)}`);
+      alphaHPoints.push(`${x},${alphaY(values.alphaH)}`);
+      alphaOHPoints.push(`${x},${alphaY(values.alphaOH)}`);
+    }
+
+    // Force the final plotted point to match the exact current volume.
+    const x = xCoord(volume);
+
+    phPoints.push(`${x},${pHY(current.pH)}`);
+    alphaHPoints.push(`${x},${alphaY(current.alphaH)}`);
+    alphaOHPoints.push(`${x},${alphaY(current.alphaOH)}`);
+
+    phCurve.setAttribute("points", phPoints.join(" "));
+    alphaHCurve.setAttribute("points", alphaHPoints.join(" "));
+    alphaOHCurve.setAttribute("points", alphaOHPoints.join(" "));
+
+    // Current points on the graph.
+    phPoint.setAttribute("cx", x);
+    phPoint.setAttribute("cy", pHY(current.pH));
+
+    alphaHPoint.setAttribute("cx", x);
+    alphaHPoint.setAttribute("cy", alphaY(current.alphaH));
+
+    alphaOHPoint.setAttribute("cx", x);
+    alphaOHPoint.setAttribute("cy", alphaY(current.alphaOH));
+
+    if (current.pH >= 8.2 && current.pH < 10.0) {
+      status.textContent =
+        "Phenolphthalein endpoint color is appearing: pale pink.";
+    } else if (volume >= 25.0 && current.pH < 10.0) {
+      status.textContent =
+        "Near the equivalence point.";
+    } else if (volume >= 25.0) {
+      status.textContent =
+        "Beyond equivalence: excess NaOH is present.";
+    } else {
+      status.textContent =
+        "NaOH is being added to the acidic HCl solution.";
+    }
+  }
+
+  function openStopcock() {
+    running = true;
+
+    toggleBtn.textContent = "Close Stopcock / Stop";
+    toggleBtn.classList.add("open");
+
+    // Diagonal handle represents an open stopcock.
+    stopcockHandle.setAttribute("x1", "255");
+    stopcockHandle.setAttribute("y1", "350");
+    stopcockHandle.setAttribute("x2", "305");
+    stopcockHandle.setAttribute("y2", "386");
+
+    drops.setAttribute("opacity", "1");
+    swirl.setAttribute("opacity", ".95");
+
+    status.textContent =
+      "Stopcock open: NaOH is dripping into the flask.";
+
+    if (!timer) {
+      timer = setInterval(() => {
+        if (!running) return;
+
+        // 0.05 mL is delivered per timer step.
+        volume += 0.05;
+
+        if (volume >= MAX_VOLUME) {
+          volume = MAX_VOLUME;
+          running = false;
+
+          clearInterval(timer);
+          timer = null;
+
+          closeStopcock(false);
+
+          status.textContent =
+            "Maximum programmed titrant volume reached.";
+        }
+
+        updateDisplay();
+      }, 100);
+    }
+  }
+
+  function closeStopcock(updateStatus = true) {
+    running = false;
+
+    toggleBtn.textContent = "Open Stopcock / Start";
+    toggleBtn.classList.remove("open");
+
+    // Horizontal handle represents a closed stopcock.
+    stopcockHandle.setAttribute("x1", "253");
+    stopcockHandle.setAttribute("y1", "368");
+    stopcockHandle.setAttribute("x2", "307");
+    stopcockHandle.setAttribute("y2", "368");
+
+    drops.setAttribute("opacity", "0");
+    swirl.setAttribute("opacity", ".5");
+
+    if (updateStatus) {
+      status.textContent =
+        "Stopcock closed: titration paused.";
+    }
+  }
+
+  function resetTitration() {
+    running = false;
+
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+
+    volume = 0;
+    closeStopcock(false);
+    updateDisplay();
+
+    status.textContent =
+      "Reset. Click the button to open the stopcock and begin.";
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    if (running) {
+      closeStopcock();
+    } else {
+      openStopcock();
+    }
+  });
+
+  resetBtn.addEventListener("click", resetTitration);
+
+  buildGrid();
+  updateDisplay();
+</script>
+
+</body>
+</html>
